@@ -1,16 +1,21 @@
 import { useState } from 'react'
 
 import Products from './Products.jsx'
+import Login from './Login.jsx'
 import './App.css'
 
-
-
 function App() {
-  const [count, setCount] = useState(0)
-
+  const [isAuth, setIsAuth] = useState(false);
+  const handleLogout = (res) => {
+    if(res.success) setIsAuth(!res.success);
+  }
   return (
     <>
-      <Products />
+      {
+        isAuth ? 
+        <Products onLogout={handleLogout}/> :
+        <Login setIsAuth={setIsAuth} />
+      }
     </>
   )
 }
