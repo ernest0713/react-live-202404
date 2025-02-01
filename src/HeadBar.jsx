@@ -2,7 +2,7 @@ import axios from "axios";
 
 const { VITE_BASE_URL, VITE_API_PATH } = import.meta.env;
 
-function HeadBar({ onLogout }){
+function HeadBar({ onLogout, setShowModal, setTitle }){
 
     const logout = async ()=>{
         try {
@@ -17,11 +17,16 @@ function HeadBar({ onLogout }){
     }
     return(
         <>
-            <div className="flex justify-start my-2 col-span-2">
+            <div className="flex justify-between my-2 col-span-2">
                 <div className="mr-4">
-                    <button className="p-2 border rounded hover:bg-blue-500 hover:text-orange-500" type="button">驗證登入</button>
+                    <button className="p-2 border rounded hover:bg-blue-500 hover:text-orange-500" type="button" onClick={()=>{
+                    setShowModal(true);
+                    setTitle("新增產品");
+                    }}>新增產品</button>
                 </div>
-                <div><button className="p-2 border rounded hover:bg-blue-500 hover:text-orange-500" type="button" onClick={()=>{logout();}}>登出</button></div>
+                <div>
+                    <button className="p-2 border rounded hover:bg-blue-500 hover:text-orange-500" type="button" onClick={()=>{logout()}}>登出</button>
+                </div>
             </div>
         </>
     )
