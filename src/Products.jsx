@@ -36,7 +36,6 @@ function Products ({onLogout}) {
       }
     }
     const handleSaveProduct = async (tempProduct)=>{
-      console.log(tempProduct);
       const productData = {
         ...tempProduct, 
         origin_price: Number(tempProduct.origin_price), 

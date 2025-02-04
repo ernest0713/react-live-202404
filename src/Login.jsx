@@ -26,7 +26,6 @@ function Login({isAuth, setIsAuth}){
             ...loginData,
             [name]: value
         })
-        // console.log(loginData);
     }
     const userLogin = async (e)=>{
         e.preventDefault();
@@ -52,7 +51,6 @@ function Login({isAuth, setIsAuth}){
                 axios.defaults.headers.common['Authorization'] = token; // set token to axios header
                 const res = await axios.post(`${VITE_BASE_URL}/api/user/check`); // check login status
                 const { success } = res.data;
-                console.log(res.data);
                 if(success) setIsAuth(true);
             }
         } catch (error) {
