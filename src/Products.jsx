@@ -20,25 +20,48 @@ const productDefaultData = {
 
 
 function Products ({onLogout}) {
-    // const [products, setProducts ] = useState(data);
-    const [productDetail, setProductDetail ] = useState(null);
     const [productImage, setProductImage] = useState("");
-    const [productImages, setProductImages] = useState([]);
     const [productList, setProductList] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [tempProduct, setTempProduct] = useState(productDefaultData);
     const [title, setTitle] = useState("");
+    const [isDelete, setIsDelete] = useState(false);
 
     const getProductList = async ()=>{
       try {
         const res = await axios.get(`${VITE_BASE_URL}/api/${VITE_API_PATH}/products/all`);
-        console.log(res.data)
         setProductList(res.data.products);
       } catch (error) {
         console.error(error);
       }
     }
-
+    const handleSaveProduct = async (tempProduct)=>{
+      console.log(tempProduct);
+      const productData = {
+        ...tempProduct, 
+        origin_price: Number(tempProduct.origin_price), 
+        price: Number(tempProduct.price),
+        is_enabled: tempProduct.is_enabled ? 1 : 0
+      };
+      try {
+        if(isDelete){
+          await axios.delete(`${VITE_BASE_URL}/api/${VITE_API_PATH}/admin/product/${productData.id}`);
+        }else{
+          if(productData.id){
+            await axios.put(`${VITE_BASE_URL}/api/${VITE_API_PATH}/admin/product/${productData.id}`, { data: productData});
+          } else {
+            await axios.post(`${VITE_BASE_URL}/api/${VITE_API_PATH}/admin/product`, { data: productData});
+          }
+        }
+        getProductList();
+      } catch (error) {
+        alert('儲存失敗');
+        console.log(error);
+      } finally {
+        setIsDelete(false);
+      }
+    };
+      
     const toggleImage = (url, index, ary)=>{
         const nowImage = productImage;
         ary.splice(index,1);
@@ -66,15 +89,29 @@ function Products ({onLogout}) {
       })
     }
 
-    const handleAddImage = () => {};
-    const handleRemoveImage = () => {};
+    const handleAddImage = () => {
+      const newImages = [...tempProduct.imagesUrl, ''];
+  
+      setTempProduct({
+        ...tempProduct,
+        imagesUrl: newImages
+      })
+    };
+    const handleRemoveImage = () => {
+      const newImages = [...tempProduct.imagesUrl];
+      newImages.pop();
+      setTempProduct({
+        ...tempProduct,
+        imagesUrl: newImages
+      })
+    };
 
     useEffect(()=>{ getProductList() }, []);
 
     return(
       <>
-        <div className="grid grid-cols-2 w-[90rem] px-4">
-            <HeadBar onLogout={onLogout} setShowModal={setShowModal} setTitle={setTitle} />
+        <div className="flex flex-col w-[90rem] px-4">
+            <HeadBar onLogout={onLogout} setShowModal={setShowModal} setTitle={setTitle} setTempProduct={setTempProduct} setIsDelete={setIsDelete}/>
             <div className="mr-2">
               <h2 className="text-3xl">產品列表</h2>
               <table className="min-w-full mt-2">
@@ -115,14 +152,20 @@ function Products ({onLogout}) {
                                     }</span>
                                 </td>
                                 <td className="px-6 py-4 text-sm font-medium leading-5 text-center whitespace-no-wrap border-b border-gray-200">
-                                    <button className="text-indigo-600 hover:text-indigo-900 hover:bg-sky-200 border px-6 py-2 rounded-full mr-1" type="button"
+                                    <button className="text-indigo-600 hover:text-indigo-900 hover:bg-sky-200 border px-4 py-2 rounded-full mr-1" type="button"
                                     onClick={()=>{
                                       setTempProduct(product);
                                       setShowModal(true);
                                       setTitle("編輯產品");
+                                      setIsDelete(false);
                                     }}>編輯</button>
-                                    <button className="text-indigo-600 hover:text-indigo-900 hover:bg-sky-200 border px-4 py-2 rounded-full" type="button"
-                                    onClick={()=>{setProductDetail(product); setProductImage(product.imageUrl); setProductImages(product.imagesUrl);}}>檢視商品</button>
+                                    <button className="bg-white text-red-600 border hover:text-white hover:bg-red-400 hover:border-red-400 px-4 py-2 rounded-full" type="button"
+                                    onClick={()=>{
+                                      setTempProduct(product);
+                                      setShowModal(true);
+                                      setTitle("刪除產品");
+                                      setIsDelete(true);
+                                    }}>刪除</button>
                                 </td>
                             </tr>
                       )
@@ -131,235 +174,201 @@ function Products ({onLogout}) {
                   </tbody>
               </table>
             </div>
-            <div>
-                <h2 className="text-3xl mb-t">單一產品細節</h2>
-                { 
-                  productDetail ? (
-                    <div className="flex flex-col border items-center rounded mb-4">
-                      <img src={ productImage } className="w-64 my-2" alt="主圖" />
-                      <div className="flex- flex-col w-full">
-                        <h5 className="mt-1 ml-1">
-                          { productDetail.title }
-                          <span className="border bg-blue-500 text-white text-xs font-semibold p-1 px-2 ml-2 rounded-full">{ productDetail.category }</span>
-                        </h5>
-                      <p className="mt-1 ml-1">商品描述：{ productDetail.description }</p>
-                      <p className="mt-1 ml-1">商品內容：{ productDetail.content }</p>
-                      <div className="d-flex ml-1">
-                        <p className="mt-1 text-gray-900">
-                          <del>{ productDetail.origin_price }</del>
-                          元 / { productDetail.price } 元
-                        </p>
-                      </div>
-                      <h5 className="mt-1 ml-1">更多圖片：</h5>
-                      <div className="flex justify-start flex-wrap mt-1 ">
-                        { 
-                          productDetail.imagesUrl?.map((url, index, ary)=>{
-                            return (
-                              url === "" ? "" :
-                              <a href="#" className="w-64 mx-4 my-2" key={index} onClick={ 
-                                (event)=>{
-                                  event.preventDefault();
-                                  toggleImage(url, index, ary);
-                                }
-                              }>
-                                <img src={url} className="images w-64 mx-2" alt="附圖" key={index} />
-                              </a>)
-                          })
-                        }
-                        </div>
-                      </div>
-                    </div>
-
-                  ) : ( <p className="text-gray-500">請選擇一個商品查看</p> )
-                }
-            </div>
         </div>
         {/*  Modal */}
-        <Modal showModal={showModal} setShowModal={setShowModal} title={title} onSave={()=>{}}>
+        <Modal showModal={showModal} setShowModal={setShowModal} title={title} onSave={handleSaveProduct} tempProduct={tempProduct} isDelete={isDelete}>
           {/* Modal Content */}
-          <div className="flex flex-col w-full sm:flex-row">
-            <div className="w-full sm:w-1/2">
-                    <div className="mb-3">
-                      <label htmlFor="title" className="block text-sm/6 font-medium text-gray-900">
-                        標題
-                      </label>
-                      <input
-                        value={tempProduct.title}
-                        onChange={handleModalInputChange}
-                        name="title"
-                        id="title"
-                        type="text"
-                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                        placeholder="請輸入標題"
-                      />
-                    </div>
-
-                    <div className="mb-3">
-                      <label htmlFor="category" className="block text-sm/6 font-medium text-gray-900">
-                        分類
-                      </label>
-                      <input
-                        value={tempProduct.category}
-                        onChange={handleModalInputChange}
-                        name="category"
-                        id="category"
-                        type="text"
-                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                        placeholder="請輸入分類"
-                      />
-                    </div>
-
-                    <div className="mb-3">
-                      <label htmlFor="unit" className="block text-sm/6 font-medium text-gray-900">
-                        單位
-                      </label>
-                      <input
-                        value={tempProduct.unit}
-                        onChange={handleModalInputChange}
-                        name="unit"
-                        id="unit"
-                        type="text"
-                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                        placeholder="請輸入單位"
-                      />
-                    </div>
-
-                    <div className="row gap-3 mb-3">
-                      <div className="col-6">
-                        <label htmlFor="origin_price" className="block text-sm/6 font-medium text-gray-900">
-                          原價
-                        </label>
-                        <input
-                          value={tempProduct.origin_price}
-                          onChange={handleModalInputChange}
-                          name="origin_price"
-                          id="origin_price"
-                          type="number"
-                          className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                          placeholder="請輸入原價"
-                        />
-                      </div>
-                      <div className="col-6">
-                        <label htmlFor="price" className="block text-sm/6 font-medium text-gray-900">
-                          售價
-                        </label>
-                        <input
-                          value={tempProduct.price}
-                          onChange={handleModalInputChange}
-                          name="price"
-                          id="price"
-                          type="number"
-                          className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                          placeholder="請輸入售價"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mb-3">
-                      <label htmlFor="description" className="block text-sm/6 font-medium text-gray-900">
-                        產品描述
-                      </label>
-                      <textarea
-                        value={tempProduct.description}
-                        onChange={handleModalInputChange}
-                        name="description"
-                        id="description"
-                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                        rows={4}
-                        placeholder="請輸入產品描述"
-                      ></textarea>
-                    </div>
-
-                    <div className="mb-3">
-                      <label htmlFor="content" className="block text-sm/6 font-medium text-gray-900">
-                        說明內容
-                      </label>
-                      <textarea
-                        value={tempProduct.content}
-                        onChange={handleModalInputChange}
-                        name="content"
-                        id="content"
-                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                        rows={4}
-                        placeholder="請輸入說明內容"
-                      ></textarea>
-                    </div>
-
-                    <div className="flex items-center mb-3">
-                      <input
-                        checked={tempProduct.is_enabled}
-                        onChange={handleModalInputChange}
-                        name="is_enabled"
-                        type="checkbox"
-                        className="w-4 h-4 mr-2"
-                        id="isEnabled"
-                      />
-                      <label className="" htmlFor="isEnabled">
-                        是否啟用
-                      </label>
-                    </div>
+          {isDelete ? (
+            <div className="flex flex-col w-full">
+              <p className="text-red-600 text-lg">
+                確定要刪除 <strong className="text-2xl">{ tempProduct.title }</strong> ?
+              </p>
             </div>
-            <div className="w-full sm:w-1/2">
-                    <div className="mb-4">
-                      <label htmlFor="primary-image" className="block text-sm/6 font-medium text-gray-900">
-                        主圖
-                      </label>
-                      <div className="input-group">
+          ) : (
+            <div className="flex flex-col w-full sm:flex-row sm:flex-row-reverse">
+              <div className="w-full sm:w-1/2 lg:w-3/4">
+                      <div className="mb-3">
+                        <label htmlFor="title" className="block text-sm/6 font-medium text-gray-900">
+                          標題
+                        </label>
                         <input
-                          value={tempProduct.imageUrl}
+                          value={tempProduct.title}
                           onChange={handleModalInputChange}
-                          name="imageUrl"
+                          name="title"
+                          id="title"
                           type="text"
-                          id="primary-image"
-                          className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                          placeholder="請輸入圖片連結"
+                          className="border block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                          placeholder="請輸入標題"
                         />
                       </div>
-                      <img
-                        src={tempProduct.imageUrl}
-                        alt={tempProduct.title}
-                        className="img-fluid"
-                      />
-                    </div>
 
-                    <div className="w-full rounded-lg border border-dashed border-gray-900/25 p-3">
-                      {tempProduct.imagesUrl?.map((image, index) => (
-                        <div key={index} className="mb-2">
-                          <label
-                            htmlFor={`imagesUrl-${index + 1}`}
-                            className="form-label"
-                          >
-                            副圖 {index + 1}
+                      <div className="mb-3">
+                        <label htmlFor="category" className="block text-sm/6 font-medium text-gray-900">
+                          分類
+                        </label>
+                        <input
+                          value={tempProduct.category}
+                          onChange={handleModalInputChange}
+                          name="category"
+                          id="category"
+                          type="text"
+                          className="border block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                          placeholder="請輸入分類"
+                        />
+                      </div>
+
+                      <div className="mb-3">
+                        <label htmlFor="unit" className="block text-sm/6 font-medium text-gray-900">
+                          單位
+                        </label>
+                        <input
+                          value={tempProduct.unit}
+                          onChange={handleModalInputChange}
+                          name="unit"
+                          id="unit"
+                          type="text"
+                          className="border block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                          placeholder="請輸入單位"
+                        />
+                      </div>
+
+                      <div className="flex gap-3 mb-3">
+                        <div className="w-1/2">
+                          <label htmlFor="origin_price" className="block text-sm/6 font-medium text-gray-900">
+                            原價
                           </label>
                           <input
-                            value={image}
-                            onChange={(e) => handleImageChange(e, index)}
-                            id={`imagesUrl-${index + 1}`}
-                            type="text"
-                            placeholder={`圖片網址 ${index + 1}`}
-                            className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 mb-2"
+                            value={tempProduct.origin_price}
+                            onChange={handleModalInputChange}
+                            name="origin_price"
+                            id="origin_price"
+                            type="number"
+                            className="border block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            placeholder="請輸入原價"
                           />
-                          {image && (
-                            <img
-                              src={image}
-                              alt={`副圖 ${index + 1}`}
-                              className="img-fluid mb-2"
+                        </div>
+                        <div className="w-1/2">
+                          <label htmlFor="price" className="block text-sm/6 font-medium text-gray-900">
+                            售價
+                          </label>
+                          <input
+                            value={tempProduct.price}
+                            onChange={handleModalInputChange}
+                            name="price"
+                            id="price"
+                            type="number"
+                            className="border block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            placeholder="請輸入售價"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mb-3">
+                        <label htmlFor="description" className="block text-sm/6 font-medium text-gray-900">
+                          產品描述
+                        </label>
+                        <textarea
+                          value={tempProduct.description}
+                          onChange={handleModalInputChange}
+                          name="description"
+                          id="description"
+                          className="border block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                          rows={4}
+                          placeholder="請輸入產品描述"
+                        ></textarea>
+                      </div>
+
+                      <div className="mb-3">
+                        <label htmlFor="content" className="block text-sm/6 font-medium text-gray-900">
+                          說明內容
+                        </label>
+                        <textarea
+                          value={tempProduct.content}
+                          onChange={handleModalInputChange}
+                          name="content"
+                          id="content"
+                          className="border block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                          rows={4}
+                          placeholder="請輸入說明內容"
+                        ></textarea>
+                      </div>
+
+                      <div className="flex items-center mb-3">
+                        <input
+                          checked={tempProduct.is_enabled}
+                          onChange={handleModalInputChange}
+                          name="is_enabled"
+                          type="checkbox"
+                          className="w-4 h-4 mr-2"
+                          id="isEnabled"
+                        />
+                        <label className="" htmlFor="isEnabled">
+                          是否啟用
+                        </label>
+                      </div>
+              </div>
+              <div className="w-full sm:w-1/2 lg:w-1/4 mr-2">
+                      <div className="mb-4">
+                        <label htmlFor="primary-image" className="block text-sm/6 font-medium text-gray-900">
+                          主圖
+                        </label>
+                        <div>
+                          <input
+                            value={tempProduct.imageUrl}
+                            onChange={handleModalInputChange}
+                            name="imageUrl"
+                            type="text"
+                            id="primary-image"
+                            className="block w-full rounded-md bg-white p-1 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                            placeholder="請輸入圖片連結"
+                          />
+                        </div>
+                        <img
+                          src={tempProduct.imageUrl}
+                          alt={tempProduct.title}
+                          className="img-fluid"
+                        />
+                      </div>
+
+                      <div className="w-full rounded-lg border border-dashed border-gray-900/25 p-3">
+                        {tempProduct.imagesUrl?.map((image, index) => (
+                          <div key={index} className="mb-2">
+                            <label
+                              htmlFor={`imagesUrl-${index + 1}`}
+                              className="form-label"
+                            >
+                              副圖 {index + 1}
+                            </label>
+                            <input
+                              value={image}
+                              onChange={(e) => handleImageChange(e, index)}
+                              id={`imagesUrl-${index + 1}`}
+                              type="text"
+                              placeholder={`圖片網址 ${index + 1}`}
+                              className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 mb-2"
                             />
+                            {image && (
+                              <img
+                                src={image}
+                                alt={`副圖 ${index + 1}`}
+                                className="img-fluid mb-2"
+                              />
+                            )}
+                          </div>
+                        ))}
+
+                        <div className="inline-flex justify-center shadow-xs w-full">
+                          {tempProduct.imagesUrl.length < 5 && tempProduct.imagesUrl[tempProduct.imagesUrl.length - 1] !== '' && (
+                            <button className="w-full sm:w-auto px-4 py-2 mr-2 text-sm font-medium text-blue-700 bg-transparent border border-blue-700 rounded hover:bg-blue-700 hover:text-white focus:z-10 focus:ring-2 focus:ring-blue-500 focus:bg-blue-900 focus:text-white" onClick={handleAddImage}>新增圖片</button>
+                          )}
+                          {tempProduct.imagesUrl.length > 1 && (
+                            <button className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-red-700 bg-transparent border border-red-700 rounded hover:bg-red-700 hover:text-white focus:z-10 focus:ring-2 focus:ring-red-500 focus:bg-red-700 focus:text-white" onClick={(handleRemoveImage)}>取消圖片</button>
                           )}
                         </div>
-                      ))}
-
-                      <div className="btn-group w-full">
-                        {tempProduct.imagesUrl.length < 5 && tempProduct.imagesUrl[tempProduct.imagesUrl.length - 1] !== '' && (
-                          <button className="btn btn-outline-primary btn-sm w-full" onClick={handleAddImage}>新增圖片</button>
-                        )}
-                        {tempProduct.imagesUrl.length > 1 && (
-                          <button className="btn btn-outline-danger btn-sm w-full" onClick={(handleRemoveImage)}>取消圖片</button>
-                        )}
                       </div>
-                    </div>
+              </div>
             </div>
-          </div>
+          )}
         </Modal>
       </>
     )

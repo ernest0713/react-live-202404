@@ -2,7 +2,7 @@ import axios from "axios";
 
 const { VITE_BASE_URL, VITE_API_PATH } = import.meta.env;
 
-function HeadBar({ onLogout, setShowModal, setTitle }){
+function HeadBar({ onLogout, setShowModal, setTitle, setTempProduct, setIsDelete }){
 
     const logout = async ()=>{
         try {
@@ -20,8 +20,20 @@ function HeadBar({ onLogout, setShowModal, setTitle }){
             <div className="flex justify-between my-2 col-span-2">
                 <div className="mr-4">
                     <button className="p-2 border rounded hover:bg-blue-500 hover:text-orange-500" type="button" onClick={()=>{
-                    setShowModal(true);
-                    setTitle("新增產品");
+                        setShowModal(true);
+                        setTitle("新增產品");
+                        setTempProduct({
+                            imageUrl: "",
+                            title: "",
+                            category: "",
+                            unit: "",
+                            origin_price: "",
+                            price: "",
+                            description: "",
+                            content: "",
+                            is_enabled: 0,
+                            imagesUrl: [""]});
+                        setIsDelete(false);
                     }}>新增產品</button>
                 </div>
                 <div>
