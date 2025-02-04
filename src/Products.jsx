@@ -29,7 +29,7 @@ function Products ({onLogout}) {
 
     const getProductList = async ()=>{
       try {
-        const res = await axios.get(`${VITE_BASE_URL}/api/${VITE_API_PATH}/products/all`);
+        const res = await axios.get(`${VITE_BASE_URL}/api/${VITE_API_PATH}/admin/products`);
         setProductList(res.data.products);
       } catch (error) {
         console.error(error);
@@ -42,6 +42,7 @@ function Products ({onLogout}) {
         price: Number(tempProduct.price),
         is_enabled: tempProduct.is_enabled ? 1 : 0
       };
+
       try {
         if(isDelete){
           await axios.delete(`${VITE_BASE_URL}/api/${VITE_API_PATH}/admin/product/${productData.id}`);
@@ -146,7 +147,7 @@ function Products ({onLogout}) {
                                 <td className="px-6 py-4 text-sm leading-5 text-gray-900 whitespace-no-wrap border-b border-gray-200">
                                     {product.price}</td>
                                 <td className="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
-                                    <span className="inline-flex px-2 text-xs font-semibold leading-5 text-green-800 bg-green-100 rounded-full">{
+                                    <span className={`inline-flex px-2 text-xs font-semibold leading-5 text-green-800 bg-green-100 rounded-full ${product.is_enabled ? "bg-green-100 text-green-800":"bg-red-100 text-red-800"}`}>{
                                       product.is_enabled ? "啟用":"未啟用"
                                     }</span>
                                 </td>
