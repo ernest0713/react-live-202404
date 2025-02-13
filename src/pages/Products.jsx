@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import HeadBar from "./HeadBar";
-import Modal from "./Modal";
+import HeadBar from "../component/HeadBar";
+import Modal from "../component/Modal";
 
 const { VITE_BASE_URL, VITE_API_PATH } = import.meta.env;
 
@@ -20,17 +20,19 @@ const productDefaultData = {
 
 
 function Products ({onLogout}) {
-    const [productImage, setProductImage] = useState("");
     const [productList, setProductList] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [tempProduct, setTempProduct] = useState(productDefaultData);
     const [title, setTitle] = useState("");
     const [isDelete, setIsDelete] = useState(false);
+    const [pageInfo, setPageInfo] = useState({})
 
-    const getProductList = async ()=>{
+    const getProductList = async (page = 1)=>{
       try {
-        const res = await axios.get(`${VITE_BASE_URL}/api/${VITE_API_PATH}/admin/products`);
+        const res = await axios.get(`${VITE_BASE_URL}/api/${VITE_API_PATH}/admin/products?page=${page}`);
+        console.log(res.data);
         setProductList(res.data.products);
+        setPageInfo(res.data.pagination);
       } catch (error) {
         console.error(error);
       }
@@ -62,13 +64,6 @@ function Products ({onLogout}) {
       }
     };
       
-    const toggleImage = (url, index, ary)=>{
-        const nowImage = productImage;
-        ary.splice(index,1);
-        ary.splice(index,0,nowImage);
-        setProductImage(url);
-    }
-
     const handleModalInputChange = e => {
       const { value, name, checked, type } = e.target;
   
@@ -106,13 +101,18 @@ function Products ({onLogout}) {
       })
     };
 
+    const handlePageChange = (page) => {
+      getProductList(page);
+    }
+
+
     useEffect(()=>{ getProductList() }, []);
 
     return(
       <>
         <div className="flex flex-col w-[90rem] px-4">
             <HeadBar onLogout={onLogout} setShowModal={setShowModal} setTitle={setTitle} setTempProduct={setTempProduct} setIsDelete={setIsDelete}/>
-            <div className="mr-2">
+            <div className="mb-2">
               <h2 className="text-3xl">產品列表</h2>
               <table className="min-w-full mt-2">
                   <thead>
@@ -174,6 +174,34 @@ function Products ({onLogout}) {
                   </tbody>
               </table>
             </div>
+            {/* pagination */}
+            <nav className="flex justify-center mb-2" aria-label="Page navigation">
+              <ul className="inline-flex -space-x-px text-sm">
+                <li >
+                  <a href="#" className={`flex items-center justify-center px-3 h-8 ms-0 leading-tight  bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-blue-800  
+                  ${!pageInfo.has_pre ? 'pointer-events-none text-gray-500' : 'text-blue-500'} `} 
+                  onClick={() => handlePageChange(pageInfo.current_page - 1)}
+                  >上一頁</a>
+                </li>
+                {
+                  Array.from({length: pageInfo.total_pages}).map((_, index) => (
+                  <li key={index}>
+                    <a href="#" className={`flex items-center justify-center px-3 h-8 leading-tight  border border-gray-300  ${ pageInfo.current_page === index + 1 ? 'bg-blue-500 text-white hover:bg-blue-500 hover:text-white' : 'text-blue-500 bg-white hover:bg-gray-100 hover:text-blue-800' }`}
+                    onClick={() => handlePageChange(index+1)}
+                    >
+                      {index + 1}
+                    </a>
+                  </li>
+                  ))
+                }
+                <li>
+                  <a href="#" className={`flex items-center justify-center px-3 h-8 leading-tight bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-blue-800
+                  ${!pageInfo.has_next ? 'pointer-events-none text-gray-500' : 'text-blue-500'}`}
+                  onClick={() => handlePageChange(pageInfo.current_page + 1)}
+                  >下一頁</a>
+                </li>
+              </ul>
+            </nav>
         </div>
         {/*  Modal */}
         <Modal showModal={showModal} setShowModal={setShowModal} title={title} onSave={handleSaveProduct} tempProduct={tempProduct} isDelete={isDelete}>
@@ -325,8 +353,8 @@ function Products ({onLogout}) {
                         </div>
                         <img
                           src={tempProduct.imageUrl}
-                          alt={tempProduct.title}
-                          className="img-fluid"
+                          alt="main image"
+                          className="max-w-full h-auto rounded-lg mt-2"
                         />
                       </div>
 
@@ -351,7 +379,7 @@ function Products ({onLogout}) {
                               <img
                                 src={image}
                                 alt={`副圖 ${index + 1}`}
-                                className="img-fluid mb-2"
+                                className="max-w-full h-auto rounded-lg mb-2"
                               />
                             )}
                           </div>

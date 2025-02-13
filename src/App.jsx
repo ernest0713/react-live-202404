@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
-import Products from './Products.jsx'
-import Login from './Login.jsx'
+import Products from './pages/Products.jsx'
+import Login from './pages/Login.jsx'
 import './App.css'
 
 function App() {
