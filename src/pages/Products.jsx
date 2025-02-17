@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import HeadBar from "../component/HeadBar";
 import Modal from "../component/Modal";
+import Pagination from "../component/Pagination";
 
 const { VITE_BASE_URL, VITE_API_PATH } = import.meta.env;
 
@@ -105,6 +106,24 @@ function Products ({onLogout}) {
       getProductList(page);
     }
 
+    const handleFileChange = async (e) => {
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append('file-to-upload', file);
+      try {
+        const res = await axios.post(`${VITE_BASE_URL}/api/${VITE_API_PATH}/admin/upload`, formData);
+        console.log(res.data);
+        const { imageUrl } = res.data;
+        setTempProduct({
+          ...tempProduct,
+          imageUrl
+        })
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+
 
     useEffect(()=>{ getProductList() }, []);
 
@@ -175,33 +194,7 @@ function Products ({onLogout}) {
               </table>
             </div>
             {/* pagination */}
-            <nav className="flex justify-center mb-2" aria-label="Page navigation">
-              <ul className="inline-flex -space-x-px text-sm">
-                <li >
-                  <a href="#" className={`flex items-center justify-center px-3 h-8 ms-0 leading-tight  bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-blue-800  
-                  ${!pageInfo.has_pre ? 'pointer-events-none text-gray-500' : 'text-blue-500'} `} 
-                  onClick={() => handlePageChange(pageInfo.current_page - 1)}
-                  >上一頁</a>
-                </li>
-                {
-                  Array.from({length: pageInfo.total_pages}).map((_, index) => (
-                  <li key={index}>
-                    <a href="#" className={`flex items-center justify-center px-3 h-8 leading-tight  border border-gray-300  ${ pageInfo.current_page === index + 1 ? 'bg-blue-500 text-white hover:bg-blue-500 hover:text-white' : 'text-blue-500 bg-white hover:bg-gray-100 hover:text-blue-800' }`}
-                    onClick={() => handlePageChange(index+1)}
-                    >
-                      {index + 1}
-                    </a>
-                  </li>
-                  ))
-                }
-                <li>
-                  <a href="#" className={`flex items-center justify-center px-3 h-8 leading-tight bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-blue-800
-                  ${!pageInfo.has_next ? 'pointer-events-none text-gray-500' : 'text-blue-500'}`}
-                  onClick={() => handlePageChange(pageInfo.current_page + 1)}
-                  >下一頁</a>
-                </li>
-              </ul>
-            </nav>
+            <Pagination pageInfo={pageInfo} handlePageChange={handlePageChange}/>
         </div>
         {/*  Modal */}
         <Modal showModal={showModal} setShowModal={setShowModal} title={title} onSave={handleSaveProduct} tempProduct={tempProduct} isDelete={isDelete}>
@@ -336,6 +329,23 @@ function Products ({onLogout}) {
                       </div>
               </div>
               <div className="w-full sm:w-1/2 lg:w-1/4 mr-2">
+                      <div className="mb-4">
+                        <label className="block mb-2 text-sm font-medium text-gray-900" for="file_input">圖片上傳</label>
+                        <input 
+                          className="block w-full text-sm text-slate-500
+                                    file:mr-4 file:py-2 file:px-4
+                                    file:rounded-full file:border-0
+                                    file:text-sm file:font-semibold
+                                    file:bg-violet-50 file:text-violet-700
+                                    hover:file:bg-violet-100" 
+                          ariaDescribedby="file_input_help" 
+                          id="file_input" 
+                          type="file"
+                          accept=".jpg, .jpeg, .png"
+                          onChange={(e) => handleFileChange(e)}
+                        />
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-300" id="file_input_help">PNG, JPG or JPEG (MAX. 3MB)</p>
+                      </div>
                       <div className="mb-4">
                         <label htmlFor="primary-image" className="block text-sm/6 font-medium text-gray-900">
                           主圖
