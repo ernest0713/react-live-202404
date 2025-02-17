@@ -6,7 +6,6 @@ function Modal({ showModal, setShowModal, title, children, onSave, tempProduct, 
     const handleSave = async (tempProduct) => {
         try {
             await onSave(tempProduct);
-            setShowModal(false);
         } catch (error) {
             console.log(error);
         }

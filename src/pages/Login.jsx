@@ -17,7 +17,7 @@ function deleteCookie(name){
     document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 };
 
-function Login({isAuth, setIsAuth}){
+function Login({setIsAuth}){
     const [loginData, setLoginData] = useState(user);
     const [loginFail, setLoginFail] = useState(false);
     const getUserData = (e) => {

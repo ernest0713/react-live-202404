@@ -31,7 +31,7 @@ function Products ({onLogout}) {
     const getProductList = async (page = 1)=>{
       try {
         const res = await axios.get(`${VITE_BASE_URL}/api/${VITE_API_PATH}/admin/products?page=${page}`);
-        console.log(res.data);
+        // console.log(res.data);
         setProductList(res.data.products);
         setPageInfo(res.data.pagination);
       } catch (error) {
@@ -45,7 +45,6 @@ function Products ({onLogout}) {
         price: Number(tempProduct.price),
         is_enabled: tempProduct.is_enabled ? 1 : 0
       };
-
       try {
         if(isDelete){
           await axios.delete(`${VITE_BASE_URL}/api/${VITE_API_PATH}/admin/product/${productData.id}`);
@@ -57,9 +56,11 @@ function Products ({onLogout}) {
           }
         }
         getProductList();
+        setShowModal(false);
       } catch (error) {
-        alert('儲存失敗');
-        console.log(error);
+        alert('儲存失敗：\r'+ error.response.data.message);
+        setShowModal(true);
+        // console.log(error.response);
       } finally {
         setIsDelete(false);
       }
@@ -112,13 +113,14 @@ function Products ({onLogout}) {
       formData.append('file-to-upload', file);
       try {
         const res = await axios.post(`${VITE_BASE_URL}/api/${VITE_API_PATH}/admin/upload`, formData);
-        console.log(res.data);
+        // console.log(res.data);
         const { imageUrl } = res.data;
         setTempProduct({
           ...tempProduct,
           imageUrl
         })
       } catch (error) {
+        alert('上傳失敗：\r'+ error.response.data.message);
         console.log(error);
       }
     }
@@ -338,7 +340,7 @@ function Products ({onLogout}) {
                                     file:text-sm file:font-semibold
                                     file:bg-violet-50 file:text-violet-700
                                     hover:file:bg-violet-100" 
-                          ariaDescribedby="file_input_help" 
+                          aria-describedby="file_input_help" 
                           id="file_input" 
                           type="file"
                           accept=".jpg, .jpeg, .png"
@@ -355,7 +357,7 @@ function Products ({onLogout}) {
                             value={tempProduct.imageUrl}
                             onChange={handleModalInputChange}
                             name="imageUrl"
-                            type="text"
+                            type="url"
                             id="primary-image"
                             className="block w-full rounded-md bg-white p-1 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                             placeholder="請輸入圖片連結"
@@ -381,7 +383,7 @@ function Products ({onLogout}) {
                               value={image}
                               onChange={(e) => handleImageChange(e, index)}
                               id={`imagesUrl-${index + 1}`}
-                              type="text"
+                              type="url"
                               placeholder={`圖片網址 ${index + 1}`}
                               className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 mb-2"
                             />
